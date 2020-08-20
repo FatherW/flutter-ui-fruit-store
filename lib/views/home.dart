@@ -6,6 +6,9 @@ import 'package:fruit_store/_routing/routes.dart';
 import 'package:fruit_store/models/fruit.dart';
 import 'package:fruit_store/utils/utils.dart';
 import 'package:fruit_store/widgets/fruits.dart';
+import 'package:fruit_store/models/product.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class FruitAppHomePage extends StatefulWidget {
   @override
@@ -19,6 +22,59 @@ class _FruitAppHomePageState extends State<FruitAppHomePage>
   void initState() {
     super.initState();
     tabController = TabController(vsync: this, length: 4);
+  }
+
+  Future<ProductModel> listProduct() async {
+    final String apiUrl =
+        "https://41khtanrje.execute-api.ap-northeast-1.amazonaws.com/prod/Dazzle-elasticSearchController";
+    var parma = {
+      "action": "searchData",
+      "index": "change",
+      "type": "product",
+      "_source": ["productname", "price", "pics"],
+      "from": 0,
+      "size": 5,
+      "body": {
+        "query": {"match_all": {}}
+      }
+    };
+    var parmaEncode = jsonEncode(parma);
+    final response = await http.post(apiUrl, body: parmaEncode);
+    if (response.statusCode == 200) {
+      final String responseString = response.body;
+//    var res = jsonDecode(responseString);
+      var model = json.decode(utf8.decode(response.bodyBytes));
+
+//      List<Product> productResolve = model['resolve'];
+//  print (model['resolve']);
+      List<dynamic> products = model['resolve'];
+      int id;
+      String name, desc, price, discount, image;
+      Color color;
+      double rating;
+
+      id = 13;
+      name = model['resolve'][0]['productname'];
+      price = "30";
+//      image=  model['resolve'][0]['pics'][0];
+//       image = Image.network('https://picsum.photos/250?image=9');
+      image = Image(
+              image: AssetImage(
+                  'https://i.picsum.photos/id/9/250/250.jpg?hmac=tqDH5wEWHDN76mBIWEPzg1in6egMl49qZeguSaH9_VI'))
+          .toString();
+      // image = ImageAssetPath."https://www.gettv.hk"+model['resolve'][0]['pics'][0] + 'Image';
+      discount = '90%';
+      color = Color(0XFF558948);
+      rating = 4.5;
+
+      fruits[0] = new Fruit(id, name, price, image, discount, color, rating);
+
+      print(fruits[0].image);
+
+      return productModelFromJson(responseString);
+    } else {
+      return null;
+    }
   }
 
   @override
